@@ -47,7 +47,7 @@ public class HFJavaSDKBasicExample {
 
     public static void main(String[] args) throws Exception {
 
-        String userName = "user14";
+        String userName = "user15";
 
         EnrollDemo(userName);
 

@@ -198,7 +198,7 @@ public class HFJavaSDKBasicExample {
         TransactionProposalRequest tpr = client.newTransactionProposalRequest();
         tpr.setChaincodeID(cid);
         tpr.setFcn("createCar");
-        tpr.setArgs(new String[]{"CAR100", "SKoda", "MB1000", "Yellow", "Lukas"});
+        tpr.setArgs("CAR100", "SKoda", "MB1000", "Yellow", "Lukas");
 
         Collection<ProposalResponse> responses = channel.sendTransactionProposal(tpr);   // 背书节点
 

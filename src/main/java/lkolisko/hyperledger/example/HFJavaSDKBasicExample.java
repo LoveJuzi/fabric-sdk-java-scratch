@@ -46,7 +46,6 @@ public class HFJavaSDKBasicExample {
 
 
     public static void main(String[] args) throws Exception {
-
         String userName = "user15";
 
         EnrollDemo(userName);
@@ -54,7 +53,7 @@ public class HFJavaSDKBasicExample {
         ClientDemo(userName);
     }
 
-    public static void EnrollDemo(String userName) throws Exception {
+    private static void EnrollDemo(String userName) throws Exception {
         // 基础数据
         String caUrl = "https://ca.org1.example.com:7054";
         String caName = "ca-org1";
@@ -102,7 +101,7 @@ public class HFJavaSDKBasicExample {
         serialize(newUser);
     }
 
-    public static void ClientDemo(String userName) throws Exception {
+    private static void ClientDemo(String userName) throws Exception {
 
         // 基础数据
         String channelName = "mychannel";
@@ -117,6 +116,10 @@ public class HFJavaSDKBasicExample {
 
         // 读取 admin 的信息
         AppUser user = tryDeserialize(userName);
+
+        if (user == null) {
+            return;
+        }
 
         // 创建加密组件
         CryptoSuite cryptoSuite = CryptoSuite.Factory.getCryptoSuite();
@@ -163,7 +166,7 @@ public class HFJavaSDKBasicExample {
      * @throws ProposalException
      * @throws InvalidArgumentException
      */
-    static void queryBlockChain(HFClient client) throws ProposalException, InvalidArgumentException {
+    private static void queryBlockChain(HFClient client) throws ProposalException, InvalidArgumentException {
         // get channel instance from client
         Channel channel = client.getChannel("mychannel");
         // create chaincode request
@@ -190,7 +193,7 @@ public class HFJavaSDKBasicExample {
      * @param appUser The object to be serialized
      * @throws IOException
      */
-    static void serialize(AppUser appUser) throws IOException {
+    private static void serialize(AppUser appUser) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(
                 Paths.get(appUser.getName() + ".jso")))) {
             oos.writeObject(appUser);
@@ -204,14 +207,14 @@ public class HFJavaSDKBasicExample {
      * @return
      * @throws Exception
      */
-    static AppUser tryDeserialize(String name) throws Exception {
+    private static AppUser tryDeserialize(String name) throws Exception {
         if (Files.exists(Paths.get(name + ".jso"))) {
             return deserialize(name);
         }
         return null;
     }
 
-    static AppUser deserialize(String name) throws Exception {
+    private static AppUser deserialize(String name) throws Exception {
         try (ObjectInputStream decoder = new ObjectInputStream(
                 Files.newInputStream(Paths.get(name + ".jso")))) {
             return (AppUser) decoder.readObject();

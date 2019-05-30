@@ -176,8 +176,11 @@ public class HFJavaSDKBasicExample {
         // 初始化 channel
         channel.initialize();
 
-//        queryBlockChain(hfClient);
+        queryBlockChain(hfClient);
+
         submitInfoToBlockChain(hfClient);
+
+        queryBlockChain(hfClient);
     }
 
     private static void submitInfoToBlockChain(HFClient client) throws ProposalException, InvalidArgumentException, TimeoutException, InterruptedException, ExecutionException {
@@ -195,7 +198,7 @@ public class HFJavaSDKBasicExample {
         TransactionProposalRequest tpr = client.newTransactionProposalRequest();
         tpr.setChaincodeID(cid);
         tpr.setFcn("createCar");
-        tpr.setArgs(new String[]{"CARSMH", "SKoda", "MB1000", "Yellow", "Lukas"});
+        tpr.setArgs(new String[]{"CAR100", "SKoda", "MB1000", "Yellow", "Lukas"});
 
         Collection<ProposalResponse> responses = channel.sendTransactionProposal(tpr);   // 背书节点
 

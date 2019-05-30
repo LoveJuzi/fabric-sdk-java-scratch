@@ -27,7 +27,7 @@
         2. cat /etc/hyperledger/fabric-ca-server-config/ca.org1.example.com-cert.pem
         3. 拷贝内容到 DEMO 工程中的 ca.org1.example.com.pem 文件中
         
-2. peer0.org1.example.com.pem
+2. peer0.org1.example.com.pem (还有一个类似的 peer0.org2.example.com.pem，方法类似)
 
     这个证书我们使用如下的方法获取:
     

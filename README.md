@@ -49,7 +49,7 @@
 2. 添加如下内容:
 
     ```txt
-    xxx.xxx.xxx.xxx peer0.org1.example.com  orderer.example.com ca.org1.example.com
+    xxx.xxx.xxx.xxx peer0.org1.example.com  orderer.example.com ca.org1.example.com peer0.org2.example.com 
     ```
     
     > 其中 "xxx.xxx.xxx.xxx" 是你对应的 Fabric 网络服务的地址，我是单机搭建的网络，所以都指向了同一个IP地址

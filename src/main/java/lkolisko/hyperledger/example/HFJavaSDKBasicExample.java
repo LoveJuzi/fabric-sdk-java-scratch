@@ -18,6 +18,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyStore;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
@@ -147,7 +148,7 @@ public class HFJavaSDKBasicExample {
         Orderer orderer = hfClient.newOrderer(orderer_name, orderer_url, orderer_properties);
 
         // 创建 channel，channel 一旦创建就是保存在 client 中
-        Channel channel  = hfClient.newChannel(channelName);
+        Channel channel = hfClient.newChannel(channelName);
 
         // 装配 peer 和 orderer
         channel.addPeer(peer);
@@ -157,6 +158,18 @@ public class HFJavaSDKBasicExample {
         channel.initialize();
 
         queryBlockChain(hfClient);
+    }
+
+    private static void submitInfoToBlockChain(HFClient client) throws ProposalException, InvalidArgumentException {
+        String channelName = "mychannel";
+
+        // Channel channel = client.getChannel(channelName);
+
+        ChaincodeID cid = ChaincodeID.newBuilder().setName("fabcar").build();
+
+        TransactionProposalRequest tpr = client.newTransactionProposalRequest();
+        tpr.setChaincodeID(cid);
+        tpr.setFcn("createCar");
     }
 
     /**

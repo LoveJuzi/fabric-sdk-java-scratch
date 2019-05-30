@@ -1,5 +1,6 @@
 package lkolisko.hyperledger.example;
 
+import io.netty.util.Timeout;
 import org.apache.log4j.Logger;
 import org.hyperledger.fabric.sdk.*;
 import org.hyperledger.fabric.sdk.exception.CryptoException;
@@ -22,7 +23,11 @@ import java.security.KeyStore;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  * <h1>HFJavaSDKBasicExample</h1>
@@ -107,9 +112,13 @@ public class HFJavaSDKBasicExample {
         // 基础数据
         String channelName = "mychannel";
 
-        String peer_name = "peer0.org1.example.com";
-        String peer_url = "grpcs://peer0.org1.example.com:7051";
-        String peer_pemFile = "peer0.org1.example.com.pem";
+        String peer0_org1_name = "peer0.org1.example.com";
+        String peer0_org1_url = "grpcs://peer0.org1.example.com:7051";
+        String peer0_org1_pemFile = "peer0.org1.example.com.pem";
+
+        String peer0_org2_name = "peer0.org2.example.com";
+        String peer0_org2_url = "grpcs://peer0.org2.example.com:9051";
+        String peer0_org2_pemFile = "peer0.org2.example.com.pem";
 
         String orderer_name = "orderer.example.com";
         String orderer_url = "grpcs://orderer.example.com:7050";
@@ -134,17 +143,26 @@ public class HFJavaSDKBasicExample {
         // 装配用户信息
         hfClient.setUserContext(user);
 
-        // 创建 peer
-        Properties peer_properties = new Properties();
-        peer_properties.put("pemFile", peer_pemFile);
-        Peer peer = hfClient.newPeer(peer_name, peer_url, peer_properties);
+        // 创建 peer0_org1
+        Properties peer_org1_properties = new Properties();
+        peer_org1_properties.put("pemFile", peer0_org1_pemFile);
+        peer_org1_properties.setProperty("sslProvider", "openSSL");
+        peer_org1_properties.setProperty("negotiationType", "TLS");
+        Peer peer = hfClient.newPeer(peer0_org1_name, peer0_org1_url, peer_org1_properties);
+
+        // 创建 peer0_org2
+        Properties peer_org2_properties = new Properties();
+        peer_org2_properties.put("pemFile", peer0_org2_pemFile);
+        peer_org2_properties.setProperty("sslProvider", "openSSL");
+        peer_org2_properties.setProperty("negotiationType", "TLS");
+        Peer peer2 = hfClient.newPeer(peer0_org2_name, peer0_org2_url, peer_org2_properties);
 
         // 创建 orderer
         Properties orderer_properties = new Properties();
         orderer_properties.put("pemFile", orderer_pemFile);
         // 我不清楚以下两行的具体的意思是什么
-        // orderer_properties.setProperty("sslProvider", "openSSL");
-        // orderer_properties.setProperty("negotiationType", "TLS");
+         orderer_properties.setProperty("sslProvider", "openSSL");
+         orderer_properties.setProperty("negotiationType", "TLS");
         Orderer orderer = hfClient.newOrderer(orderer_name, orderer_url, orderer_properties);
 
         // 创建 channel，channel 一旦创建就是保存在 client 中
@@ -152,24 +170,44 @@ public class HFJavaSDKBasicExample {
 
         // 装配 peer 和 orderer
         channel.addPeer(peer);
+        channel.addPeer(peer2);
         channel.addOrderer(orderer);
 
         // 初始化 channel
         channel.initialize();
 
-        queryBlockChain(hfClient);
+//        queryBlockChain(hfClient);
+        submitInfoToBlockChain(hfClient);
     }
 
-    private static void submitInfoToBlockChain(HFClient client) throws ProposalException, InvalidArgumentException {
-        String channelName = "mychannel";
+    private static void submitInfoToBlockChain(HFClient client) throws ProposalException, InvalidArgumentException, TimeoutException, InterruptedException, ExecutionException {
+        BlockEvent.TransactionEvent event = sendTransaction(client, client.getChannel("mychannel")).get(60, TimeUnit.SECONDS);
+        if (event.isValid()) {
+            log.info("Transaction tx: " + event.getTransactionID() + " is completed.");
+        } else {
+            log.error("Transaction tx: " + event.getTransactionID() + " is invalid.");
+        }
+    }
 
-        // Channel channel = client.getChannel(channelName);
-
+    private static CompletableFuture<BlockEvent.TransactionEvent> sendTransaction(HFClient client, Channel channel) throws ProposalException, InvalidArgumentException {
         ChaincodeID cid = ChaincodeID.newBuilder().setName("fabcar").build();
 
         TransactionProposalRequest tpr = client.newTransactionProposalRequest();
         tpr.setChaincodeID(cid);
         tpr.setFcn("createCar");
+        tpr.setArgs(new String[]{"CARSMH", "SKoda", "MB1000", "Yellow", "Lukas"});
+
+        Collection<ProposalResponse> responses = channel.sendTransactionProposal(tpr);   // 背书节点
+
+        List<ProposalResponse> invalid = responses.stream().filter(r -> r.isInvalid()).collect(Collectors.toList());
+        if (!invalid.isEmpty()) {
+            invalid.forEach(response -> {
+                log.error(response.getMessage());
+            });
+            throw new RuntimeException("invalid response(s) found");
+        }
+
+        return channel.sendTransaction(responses);
     }
 
     /**
